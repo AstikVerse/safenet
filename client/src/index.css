@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #FFF7F7;
+    color: #4A4A6A;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: #1A1A2E;
+    font-weight: 600;
+  }
+}
+
+/* Premium Smartphone Application Container Wrapper */
+.phone-container {
+  max-width: 430px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background-color: #FFFFFF;
+  box-shadow: 0 0 40px -10px rgba(241, 213, 216, 0.7);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Global transitions and interactives */
+.interactive-transition {
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Page-level transitions (slide-up + fade) */
+.page-transition {
+  animation: fade-in-up 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Custom styles for Leaflet Maps */
+.leaflet-container {
+  font-family: 'Inter', sans-serif !important;
+  border-radius: 12px;
+  border: 1px solid #F1D5D8;
+  z-index: 10;
+}
+
+.leaflet-bar {
+  border: 1px solid #F1D5D8 !important;
+  box-shadow: 0 4px 12px rgba(241, 213, 216, 0.4) !important;
+}
+
+.leaflet-bar a {
+  background-color: #FFFFFF !important;
+  color: #1A1A2E !important;
+  border-bottom: 1px solid #F1D5D8 !important;
+  transition: all 200ms ease;
+}
+
+.leaflet-bar a:hover {
+  background-color: #FFF7F7 !important;
+  color: #F43F5E !important;
+}
+
+/* Custom Marker Styling */
+.custom-map-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  animation: map-marker-drop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes map-marker-drop {
+  0% { transform: translateY(-20px) scale(0); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Custom circular SVG progress dash-offset transition */
+.svg-progress-circle {
+  transition: stroke-dashoffset 1s linear;
+}
+
+/* Hide scrollbar for layout elements but keep scrolling functional */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
