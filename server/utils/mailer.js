@@ -1,4 +1,45 @@
 import nodemailer from 'nodemailer';
+import https from 'https';
+
+// Helper to make secure HTTPS POST requests to SendGrid API without external library dependencies
+const sendGridPost = (apiKey, bodyData) => {
+  return new Promise((resolve, reject) => {
+    const postData = JSON.stringify(bodyData);
+    
+    const options = {
+      hostname: 'api.sendgrid.com',
+      port: 443,
+      path: '/v3/mail/send',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    };
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve({ messageId: res.headers['x-message-id'] || 'sendgrid-success-msg' });
+        } else {
+          reject(new Error(`SendGrid API returned status ${res.statusCode}: ${data}`));
+        }
+      });
+    });
+
+    req.on('error', (e) => {
+      reject(e);
+    });
+
+    req.write(postData);
+    req.end();
+  });
+};
 
 const createTransporter = async () => {
   const user = process.env.GMAIL_USER;
@@ -48,7 +89,7 @@ const createTransporter = async () => {
 export const sendPanicAlert = async (user, location, contacts, trackingLink) => {
   if (!contacts || contacts.length === 0) return [];
   
-  const transporter = await createTransporter();
+  const useSendGrid = !!process.env.SENDGRID_API_KEY;
   const timeString = new Date().toLocaleString();
   const results = [];
 
@@ -109,17 +150,47 @@ export const sendPanicAlert = async (user, location, contacts, trackingLink) => 
       </html>
     `;
 
-    try {
-      const info = await transporter.sendMail({
-        from: `"SafeNet Emergency Alert" <${process.env.GMAIL_USER || 'safenet-alert@ethereal.email'}>`,
-        to: contact.email,
-        subject: `⚠️ URGENT: Emergency SOS Alert from ${user.name}`,
-        html
-      });
-      console.log(`Email sent successfully to ${contact.name} (${contact.email})`);
-      results.push({ contactName: contact.name, email: contact.email, sentAt: new Date() });
-    } catch (err) {
-      console.error(`Error sending panic alert email to ${contact.email}:`, err);
+    if (useSendGrid) {
+      try {
+        const apiKey = process.env.SENDGRID_API_KEY;
+        const fromEmail = process.env.SENDGRID_FROM_EMAIL || process.env.GMAIL_USER;
+        
+        const bodyData = {
+          personalizations: [{
+            to: [{ email: contact.email, name: contact.name }]
+          }],
+          from: {
+            email: fromEmail,
+            name: 'SafeNet Emergency Alert'
+          },
+          subject: `⚠️ URGENT: Emergency SOS Alert from ${user.name}`,
+          content: [{
+            type: 'text/html',
+            value: html
+          }]
+        };
+
+        await sendGridPost(apiKey, bodyData);
+        console.log(`Email sent successfully via SendGrid to ${contact.name} (${contact.email})`);
+        results.push({ contactName: contact.name, email: contact.email, sentAt: new Date() });
+      } catch (err) {
+        console.error(`Error sending SendGrid panic alert to ${contact.email}:`, err);
+      }
+    } else {
+      // Fallback to standard Nodemailer SMTP
+      try {
+        const transporter = await createTransporter();
+        await transporter.sendMail({
+          from: `"SafeNet Emergency Alert" <${process.env.GMAIL_USER || 'safenet-alert@ethereal.email'}>`,
+          to: contact.email,
+          subject: `⚠️ URGENT: Emergency SOS Alert from ${user.name}`,
+          html
+        });
+        console.log(`Email sent successfully via SMTP to ${contact.name} (${contact.email})`);
+        results.push({ contactName: contact.name, email: contact.email, sentAt: new Date() });
+      } catch (err) {
+        console.error(`Error sending SMTP panic alert email to ${contact.email}:`, err);
+      }
     }
   }
 
@@ -132,7 +203,7 @@ export const sendPanicAlert = async (user, location, contacts, trackingLink) => 
 export const sendCheckinAlert = async (user, location, contacts) => {
   if (!contacts || contacts.length === 0) return [];
   
-  const transporter = await createTransporter();
+  const useSendGrid = !!process.env.SENDGRID_API_KEY;
   const timeString = new Date().toLocaleString();
   const results = [];
   const mapLink = `https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}`;
@@ -194,17 +265,47 @@ export const sendCheckinAlert = async (user, location, contacts) => {
       </html>
     `;
 
-    try {
-      const info = await transporter.sendMail({
-        from: `"SafeNet Emergency Alert" <${process.env.GMAIL_USER || 'safenet-alert@ethereal.email'}>`,
-        to: contact.email,
-        subject: `⚠️ URGENT: ${user.name} check-in missed`,
-        html
-      });
-      console.log(`Check-in alert email sent successfully to ${contact.name} (${contact.email})`);
-      results.push({ contactName: contact.name, email: contact.email, sentAt: new Date() });
-    } catch (err) {
-      console.error(`Error sending check-in alert email to ${contact.email}:`, err);
+    if (useSendGrid) {
+      try {
+        const apiKey = process.env.SENDGRID_API_KEY;
+        const fromEmail = process.env.SENDGRID_FROM_EMAIL || process.env.GMAIL_USER;
+        
+        const bodyData = {
+          personalizations: [{
+            to: [{ email: contact.email, name: contact.name }]
+          }],
+          from: {
+            email: fromEmail,
+            name: 'SafeNet Emergency Alert'
+          },
+          subject: `⚠️ URGENT: ${user.name} check-in missed`,
+          content: [{
+            type: 'text/html',
+            value: html
+          }]
+        };
+
+        await sendGridPost(apiKey, bodyData);
+        console.log(`Check-in email sent successfully via SendGrid to ${contact.name} (${contact.email})`);
+        results.push({ contactName: contact.name, email: contact.email, sentAt: new Date() });
+      } catch (err) {
+        console.error(`Error sending SendGrid check-in alert to ${contact.email}:`, err);
+      }
+    } else {
+      // Fallback to standard Nodemailer SMTP
+      try {
+        const transporter = await createTransporter();
+        await transporter.sendMail({
+          from: `"SafeNet Emergency Alert" <${process.env.GMAIL_USER || 'safenet-alert@ethereal.email'}>`,
+          to: contact.email,
+          subject: `⚠️ URGENT: ${user.name} check-in missed`,
+          html
+        });
+        console.log(`Check-in alert email sent successfully to ${contact.name} (${contact.email})`);
+        results.push({ contactName: contact.name, email: contact.email, sentAt: new Date() });
+      } catch (err) {
+        console.error(`Error sending check-in alert email to ${contact.email}:`, err);
+      }
     }
   }
 
