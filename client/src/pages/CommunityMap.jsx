@@ -29,7 +29,7 @@ const MapBoundsTracker = ({ onBoundsChange }) => {
 
 const CommunityMap = () => {
   const navigate = useNavigate();
-  const { location: geoCoords, refresh: refreshGeo } = useGeolocation();
+  const { location: geoCoords, loading: loadingGeo, refresh: refreshGeo } = useGeolocation();
 
   // Zone Report Lists
   const [zones, setZones] = useState([]);
@@ -150,63 +150,94 @@ const CommunityMap = () => {
 
       {/* Full-screen Leaflet Map Container */}
       <div className="w-full flex-1 min-h-[calc(100vh-80px)] z-10 relative">
-        {geoCoords && (
-          <MapContainer
-            center={[geoCoords.lat, geoCoords.lng]}
-            zoom={14}
-            zoomControl={false}
-            style={{ width: '100%', height: 'calc(100vh - 80px)' }}
-          >
-            {/* CartoDB Positron Light Tiles */}
-            <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            />
+        {loadingGeo ? (
+          <div className="w-full h-[calc(100vh-80px)] flex flex-col items-center justify-center bg-background-warm px-8 py-12 text-center animate-fade-in-up">
+            {/* Concentric sonar pulses */}
+            <div className="relative w-32 h-32 flex items-center justify-center mb-8">
+              {/* Outer pulse */}
+              <div className="absolute inset-0 rounded-full bg-primary/10 animate-ping opacity-75" />
+              {/* Inner pulse */}
+              <div className="absolute w-24 h-24 rounded-full bg-primary/20 animate-pulse" />
+              {/* Center circle */}
+              <div className="relative w-16 h-16 rounded-full bg-primary hover:bg-primary-hover shadow-lg flex items-center justify-center border-2 border-white">
+                <ShieldAlert size={28} className="text-white animate-pulse" />
+              </div>
+            </div>
 
-            {/* Map Bounds tracking loop */}
-            <MapBoundsTracker onBoundsChange={setMapBounds} />
+            <h3 className="text-lg font-bold text-dark-heading mb-2">
+              Securing Your Location
+            </h3>
+            <p className="text-xs text-dark-body max-w-[280px] leading-relaxed mb-8">
+              Establishing an encrypted GPS link to map local community safety zones.
+            </p>
 
-            {/* Current user coordinates marker */}
-            <Marker
-              position={[geoCoords.lat, geoCoords.lng]}
-              icon={L.divIcon({
-                html: `<div style="background-color: #3B82F6; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);" class="interactive-transition"></div>`,
-                className: 'user-pulse-marker',
-                iconSize: [16, 16],
-                iconAnchor: [8, 8]
-              })}
+            {/* Elegant small progress indicator */}
+            <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-border-soft shadow-soft">
+              <RefreshCw size={14} className="text-primary animate-spin" />
+              <span className="text-[10px] font-bold text-dark-muted tracking-wider uppercase">
+                Calibrating GPS...
+              </span>
+            </div>
+          </div>
+        ) : (
+          geoCoords && (
+            <MapContainer
+              center={[geoCoords.lat, geoCoords.lng]}
+              zoom={14}
+              zoomControl={false}
+              style={{ width: '100%', height: 'calc(100vh - 80px)' }}
             >
-              <Popup>
-                <div className="p-1 text-center font-sans">
-                  <p className="text-xs font-bold text-dark-heading">Your Location</p>
-                  <p className="text-[10px] text-dark-muted mt-0.5">Approximate GPS readings</p>
-                </div>
-              </Popup>
-            </Marker>
+              {/* CartoDB Positron Light Tiles */}
+              <TileLayer
+                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+              />
 
-            {/* Unsafe community zones reports markers */}
-            {zones.map((zone) => (
+              {/* Map Bounds tracking loop */}
+              <MapBoundsTracker onBoundsChange={setMapBounds} />
+
+              {/* Current user coordinates marker */}
               <Marker
-                key={zone._id}
-                position={[zone.location.lat, zone.location.lng]}
-                icon={createCategoryIcon(zone.category)}
+                position={[geoCoords.lat, geoCoords.lng]}
+                icon={L.divIcon({
+                  html: `<div style="background-color: #3B82F6; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);" class="interactive-transition"></div>`,
+                  className: 'user-pulse-marker',
+                  iconSize: [16, 16],
+                  iconAnchor: [8, 8]
+                })}
               >
                 <Popup>
-                  <div className="p-2 font-sans max-w-[180px]">
-                    <span className="text-[10px] font-bold text-primary tracking-wide uppercase">Community Report</span>
-                    <h4 className="text-xs font-bold text-dark-heading mt-1">{getCategoryLabel(zone.category)}</h4>
-                    <p className="text-[11px] text-dark-body mt-1 leading-relaxed">
-                      Occurs mostly in the <strong>{zone.timeOfDay}</strong>.
-                    </p>
-                    <div className="w-full border-t border-border-soft/40 my-1.5" />
-                    <span className="text-[9px] text-dark-muted block">
-                      Reported: {new Date(zone.reportedAt).toLocaleDateString()}
-                    </span>
+                  <div className="p-1 text-center font-sans">
+                    <p className="text-xs font-bold text-dark-heading">Your Location</p>
+                    <p className="text-[10px] text-dark-muted mt-0.5">Approximate GPS readings</p>
                   </div>
                 </Popup>
               </Marker>
-            ))}
-          </MapContainer>
+
+              {/* Unsafe community zones reports markers */}
+              {zones.map((zone) => (
+                <Marker
+                  key={zone._id}
+                  position={[zone.location.lat, zone.location.lng]}
+                  icon={createCategoryIcon(zone.category)}
+                >
+                  <Popup>
+                    <div className="p-2 font-sans max-w-[180px]">
+                      <span className="text-[10px] font-bold text-primary tracking-wide uppercase">Community Report</span>
+                      <h4 className="text-xs font-bold text-dark-heading mt-1">{getCategoryLabel(zone.category)}</h4>
+                      <p className="text-[11px] text-dark-body mt-1 leading-relaxed">
+                        Occurs mostly in the <strong>{zone.timeOfDay}</strong>.
+                      </p>
+                      <div className="w-full border-t border-border-soft/40 my-1.5" />
+                      <span className="text-[9px] text-dark-muted block">
+                        Reported: {new Date(zone.reportedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </Popup>
+                </Marker>
+              ))}
+            </MapContainer>
+          )
         )}
 
         {/* Legend Overlay card (bottom left) */}
