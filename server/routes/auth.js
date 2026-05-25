@@ -21,6 +21,23 @@ router.post('/register', async (req, res) => {
     return res.status(400).json({ message: 'All fields are required.' });
   }
 
+  // Password policy check: minimum 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
+  if (password.length < 8) {
+    return res.status(400).json({ message: 'Password must be at least 8 characters long.' });
+  }
+  if (!/[A-Z]/.test(password)) {
+    return res.status(400).json({ message: 'Password must contain at least one uppercase letter (A-Z).' });
+  }
+  if (!/[a-z]/.test(password)) {
+    return res.status(400).json({ message: 'Password must contain at least one lowercase letter (a-z).' });
+  }
+  if (!/\d/.test(password)) {
+    return res.status(400).json({ message: 'Password must contain at least one number (0-9).' });
+  }
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+    return res.status(400).json({ message: 'Password must contain at least one special character (e.g. !, @, #, $, %).' });
+  }
+
   try {
     // Check if email already exists
     const existingUser = await User.findOne({ email });

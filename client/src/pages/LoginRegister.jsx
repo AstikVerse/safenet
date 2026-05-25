@@ -68,6 +68,19 @@ const LoginRegister = () => {
 
     if (!formData.password) {
       newErrors.password = 'Password is required.';
+    } else if (isRegister) {
+      // Strong password validation rules on registration
+      if (formData.password.length < 8) {
+        newErrors.password = 'Password must be at least 8 characters long.';
+      } else if (!/[A-Z]/.test(formData.password)) {
+        newErrors.password = 'Password must contain at least one uppercase letter (A-Z).';
+      } else if (!/[a-z]/.test(formData.password)) {
+        newErrors.password = 'Password must contain at least one lowercase letter (a-z).';
+      } else if (!/\d/.test(formData.password)) {
+        newErrors.password = 'Password must contain at least one number (0-9).';
+      } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
+        newErrors.password = 'Password must contain at least one special character (e.g. !, @, #, $, %).';
+      }
     } else if (formData.password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters.';
     }
