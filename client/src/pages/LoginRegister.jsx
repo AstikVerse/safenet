@@ -125,7 +125,7 @@ const LoginRegister = () => {
             <Shield size={20} className="text-white" />
           </div>
           <span className="text-3xl font-black tracking-wider text-primary">
-            Safe<span className="text-secondary">Net</span>
+            Safe Net
           </span>
         </div>
         <h2 className="text-xl font-bold text-dark-heading mt-2">
