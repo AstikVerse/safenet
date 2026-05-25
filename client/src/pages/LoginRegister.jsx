@@ -117,16 +117,21 @@ const LoginRegister = () => {
     <div className="phone-container page-transition bg-background-warm flex flex-col justify-center px-6 py-8">
       {/* Top Header branding */}
       <div className="flex flex-col items-center mb-8">
-        <div
-          onClick={() => navigate('/')}
-          className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-md cursor-pointer hover:scale-105 interactive-transition mb-3"
-        >
-          <Shield size={24} className="text-white" />
+        <div className="flex items-center gap-2 mb-2">
+          <div
+            onClick={() => navigate('/')}
+            className="w-10 h-10 bg-primary rounded-full flex items-center justify-center shadow-md cursor-pointer hover:scale-105 interactive-transition"
+          >
+            <Shield size={20} className="text-white" />
+          </div>
+          <span className="text-3xl font-black tracking-wider text-primary">
+            Safe<span className="text-secondary">Net</span>
+          </span>
         </div>
-        <h2 className="text-2xl font-bold text-dark-heading">
+        <h2 className="text-xl font-bold text-dark-heading mt-2">
           {isRegister ? 'Create Account' : 'Welcome Back'}
         </h2>
-        <p className="text-sm text-dark-muted mt-1">
+        <p className="text-xs text-dark-muted mt-1">
           {isRegister ? 'Join SafeNet to secure your journeys' : 'Enter your credentials to secure your session'}
         </p>
       </div>
