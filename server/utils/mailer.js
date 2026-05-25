@@ -161,9 +161,9 @@ export const sendPanicAlert = async (user, location, contacts, trackingLink) => 
           }],
           from: {
             email: fromEmail,
-            name: 'SafeNet Safety Network'
+            name: 'SafeNet Emergency Alert'
           },
-          subject: `SafeNet Safety Update from ${user.name}`,
+          subject: `⚠️ URGENT: Emergency SOS Alert from ${user.name}`,
           content: [{
             type: 'text/html',
             value: html
@@ -181,9 +181,9 @@ export const sendPanicAlert = async (user, location, contacts, trackingLink) => 
       try {
         const transporter = await createTransporter();
         await transporter.sendMail({
-          from: `"SafeNet Safety Network" <${process.env.GMAIL_USER || 'safenet-alert@ethereal.email'}>`,
+          from: `"SafeNet Emergency Alert" <${process.env.GMAIL_USER || 'safenet-alert@ethereal.email'}>`,
           to: contact.email,
-          subject: `SafeNet Safety Update from ${user.name}`,
+          subject: `⚠️ URGENT: Emergency SOS Alert from ${user.name}`,
           html
         });
         console.log(`Email sent successfully via SMTP to ${contact.name} (${contact.email})`);
@@ -276,9 +276,9 @@ export const sendCheckinAlert = async (user, location, contacts) => {
           }],
           from: {
             email: fromEmail,
-            name: 'SafeNet Safety Network'
+            name: 'SafeNet Emergency Alert'
           },
-          subject: `SafeNet Safety Status: check-in missed for ${user.name}`,
+          subject: `⚠️ URGENT: ${user.name} check-in missed`,
           content: [{
             type: 'text/html',
             value: html
@@ -296,9 +296,9 @@ export const sendCheckinAlert = async (user, location, contacts) => {
       try {
         const transporter = await createTransporter();
         await transporter.sendMail({
-          from: `"SafeNet Safety Network" <${process.env.GMAIL_USER || 'safenet-alert@ethereal.email'}>`,
+          from: `"SafeNet Emergency Alert" <${process.env.GMAIL_USER || 'safenet-alert@ethereal.email'}>`,
           to: contact.email,
-          subject: `SafeNet Safety Status: check-in missed for ${user.name}`,
+          subject: `⚠️ URGENT: ${user.name} check-in missed`,
           html
         });
         console.log(`Check-in alert email sent successfully to ${contact.name} (${contact.email})`);
