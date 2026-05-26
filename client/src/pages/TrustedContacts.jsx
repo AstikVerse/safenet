@@ -128,29 +128,6 @@ const TrustedContacts = () => {
               Your trusted contacts are your safety net. They receive live tracking links during an active SOS and alerts if you miss a check-in.
             </p>
           </div>
-          <div className="w-full border-t border-border-soft/50" />
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[10px] font-bold text-dark-muted tracking-wider uppercase">Daily Email Cap</span>
-              <span className="text-xs font-semibold text-dark-body">
-                {user?.dailySosEmailsCount >= 3 
-                  ? "Capped: Daily email limits reached." 
-                  : `Remaining daily emails: ${3 - (user?.dailySosEmailsCount || 0)}`}
-              </span>
-            </div>
-            {/* Progress Visual Bar */}
-            <div className="flex items-center gap-2">
-              <div className="w-24 bg-background-warm border border-border-soft h-3.5 rounded-full overflow-hidden flex p-[2px]">
-                <div 
-                  className={`h-full rounded-full ${user?.dailySosEmailsCount >= 3 ? 'bg-primary' : 'bg-secondary'}`}
-                  style={{ width: `${Math.min(100, ((user?.dailySosEmailsCount || 0) / 3) * 100)}%` }}
-                />
-              </div>
-              <span className="text-xs font-bold text-dark-heading">
-                {Math.min(3, user?.dailySosEmailsCount || 0)}/3
-              </span>
-            </div>
-          </div>
         </div>
 
         {/* Contacts Core list */}
