@@ -63,6 +63,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: 'I need help. This is my live location.'
   },
+  dailySosEmailsCount: {
+    type: Number,
+    default: 0
+  },
+  lastSosEmailDate: {
+    type: String,
+    default: ''
+  },
   createdAt: {
     type: Date,
     default: Date.now

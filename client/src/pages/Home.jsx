@@ -39,6 +39,7 @@ const Home = () => {
   const [panicEvent, setPanicEvent] = useState(null); // stores active panic event document info
   const [panicStatus, setPanicStatus] = useState('idle'); // idle | triggered | active | resolving
   const [flashScreen, setFlashScreen] = useState(false);
+  const [quotaExceeded, setQuotaExceeded] = useState(false);
 
   const holdTimer = useRef(null);
   const gpsInterval = useRef(null);
@@ -49,9 +50,11 @@ const Home = () => {
     // If a panic was active locally, we can let them resolve it
     const localPanicId = localStorage.getItem('safenet_active_panic_id');
     const localPanicToken = localStorage.getItem('safenet_active_panic_token');
+    const localQuotaExceeded = localStorage.getItem('safenet_active_panic_quota_exceeded') === 'true';
     if (localPanicId && localPanicToken) {
       setPanicStatus('active');
       setPanicEvent({ id: localPanicId, token: localPanicToken });
+      setQuotaExceeded(localQuotaExceeded);
       joinRoom(localPanicId, localPanicToken);
     }
   }, [joinRoom]);
@@ -148,15 +151,17 @@ const Home = () => {
         lng: geoCoords.lng
       });
 
-      const { panicEventId, trackingToken } = res.data;
+      const { panicEventId, trackingToken, emailQuotaExceeded } = res.data;
       
       const newPanic = { id: panicEventId, token: trackingToken };
       setPanicEvent(newPanic);
+      setQuotaExceeded(!!emailQuotaExceeded);
       setPanicStatus('active');
 
       // Persist locally so page reloads don't lose emergency tracking
       localStorage.setItem('safenet_active_panic_id', panicEventId);
       localStorage.setItem('safenet_active_panic_token', trackingToken);
+      localStorage.setItem('safenet_active_panic_quota_exceeded', !!emailQuotaExceeded);
 
       // Join WebSocket tracking room
       joinRoom(panicEventId, trackingToken);
@@ -182,9 +187,11 @@ const Home = () => {
       // Wipe local storage keys
       localStorage.removeItem('safenet_active_panic_id');
       localStorage.removeItem('safenet_active_panic_token');
+      localStorage.removeItem('safenet_active_panic_quota_exceeded');
 
       setPanicEvent(null);
       setPanicStatus('idle');
+      setQuotaExceeded(false);
       setProgress(0);
       setIsPressing(false);
 
@@ -197,8 +204,10 @@ const Home = () => {
       
       localStorage.removeItem('safenet_active_panic_id');
       localStorage.removeItem('safenet_active_panic_token');
+      localStorage.removeItem('safenet_active_panic_quota_exceeded');
       setPanicEvent(null);
       setPanicStatus('idle');
+      setQuotaExceeded(false);
     }
   };
 
@@ -317,16 +326,30 @@ const Home = () => {
             </div>
 
             <h3 className="text-xl font-bold text-primary">Emergency SOS Activated</h3>
-            <p className="text-sm text-dark-body mt-2 leading-relaxed max-w-[280px]">
-              Trusted contacts and safety rooms have been alerted. Streaming live location.
-            </p>
+            
+            {quotaExceeded ? (
+              <div className="bg-rose-50 border border-primary/25 rounded-xl p-3.5 text-left flex flex-col gap-1.5 mt-4 mb-2 w-full animate-pulse-ring">
+                <span className="text-[10px] font-black text-primary tracking-wider uppercase leading-none">⚠️ Email Quota Active</span>
+                <p className="text-[11px] text-primary font-medium leading-relaxed mt-0.5">
+                  Daily emergency alert limit reached (3/3). Local tools remain fully functional, but outbound emails to contacts are blocked. Try again tomorrow or call 112 directly if this is a real emergency.
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-dark-body mt-2 leading-relaxed max-w-[280px]">
+                Trusted contacts and safety rooms have been alerted. Streaming live location.
+              </p>
+            )}
 
             <div className="w-full border-t border-border-soft/60 my-5" />
 
             <ul className="w-full flex flex-col gap-3.5 mb-6 text-left">
               <li className="flex items-center gap-3 text-xs font-semibold text-dark-body bg-primary-light/50 border border-primary/10 rounded-xl px-4 py-3">
                 <Heart size={16} className="text-primary shrink-0" />
-                <span>{user?.trustedContacts?.length || 0} Trusted Contacts Notified</span>
+                <span>
+                  {quotaExceeded 
+                    ? "Outbound Emails Blocked (Quota Exceeded)" 
+                    : `${user?.trustedContacts?.length || 0} Trusted Contacts Notified`}
+                </span>
               </li>
               <li className="flex items-center gap-3 text-xs font-semibold text-dark-body bg-primary-light/50 border border-primary/10 rounded-xl px-4 py-3">
                 <MapPin size={16} className="text-primary shrink-0" />

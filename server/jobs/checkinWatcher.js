@@ -91,13 +91,18 @@ export const startCheckinWatcher = () => {
           // Check if Phase 2 Secondary Escalation is due
           const elapsedMs = now.getTime() - new Date(panic.triggeredAt).getTime();
           if (!panic.secondaryAlertsSent && elapsedMs >= ESCALATION_DELAY_MS) {
-            console.log(`🚨 Priority Escalation: Active SOS for ${user.name} has been active for ${ESCALATION_DELAY_MINUTES} min. Dispatched Phase 2 escalation to all contacts...`);
+            console.log(`🚨 Priority Escalation: Active SOS for ${user.name} has been active for ${ESCALATION_DELAY_MINUTES} min.`);
 
-            // Email primary & secondary contacts with latest coordinates
-            const sentResults = await sendPanicAlert(user, panic.location, contacts, trackingLink);
+            // Email primary & secondary contacts with latest coordinates (only if emails are enabled)
+            if (panic.emailsEnabled !== false) {
+              console.log(`Dispatched Phase 2 escalation to all contacts...`);
+              const sentResults = await sendPanicAlert(user, panic.location, contacts, trackingLink);
+              panic.alertsSent.push(...sentResults);
+            } else {
+              console.log(`Phase 2 Escalation email skipped (Daily email quota reached).`);
+            }
 
             // Update alert metadata
-            panic.alertsSent.push(...sentResults);
             panic.secondaryAlertsSent = true;
             panic.lastEmailSentAt = now;
             await panic.save();
@@ -109,16 +114,20 @@ export const startCheckinWatcher = () => {
           if (now.getTime() - lastSentTime >= EMAIL_INTERVAL_MS) {
             console.log(`🚨 Periodic SOS Alert: Sending 5m update for active panic of ${user.name}...`);
 
-            // If secondary alerts have not been sent yet (we are still within the 10-minute window),
-            // periodic updates should only go to PRIMARY contacts!
-            // Once secondary alerts are sent, periodic updates go to ALL contacts!
-            const targetContacts = panic.secondaryAlertsSent 
-              ? contacts 
-              : contacts.filter(c => c.priority === 'primary' || !c.priority);
+            if (panic.emailsEnabled !== false) {
+              // If secondary alerts have not been sent yet (we are still within the 10-minute window),
+              // periodic updates should only go to PRIMARY contacts!
+              // Once secondary alerts are sent, periodic updates go to ALL contacts!
+              const targetContacts = panic.secondaryAlertsSent 
+                ? contacts 
+                : contacts.filter(c => c.priority === 'primary' || !c.priority);
 
-            if (targetContacts.length > 0) {
-              const sentResults = await sendPanicAlert(user, panic.location, targetContacts, trackingLink);
-              panic.alertsSent.push(...sentResults);
+              if (targetContacts.length > 0) {
+                const sentResults = await sendPanicAlert(user, panic.location, targetContacts, trackingLink);
+                panic.alertsSent.push(...sentResults);
+              }
+            } else {
+              console.log(`Periodic update email skipped (Daily email quota reached).`);
             }
 
             panic.lastEmailSentAt = now;

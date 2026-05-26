@@ -25,6 +25,25 @@ router.post('/trigger', verifyToken, async (req, res) => {
       return res.status(404).json({ message: 'User not found.' });
     }
 
+    // A. Daily Email Rate Limiter Quota calculation (Model B)
+    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); // YYYY-MM-DD in India
+    if (user.lastSosEmailDate !== todayStr) {
+      user.dailySosEmailsCount = 0;
+      user.lastSosEmailDate = todayStr;
+    }
+
+    const MAX_SOS_EMAILS_PER_DAY = parseInt(process.env.MAX_SOS_EMAILS_PER_DAY) || 3;
+    let emailQuotaExceeded = false;
+
+    if (user.dailySosEmailsCount >= MAX_SOS_EMAILS_PER_DAY) {
+      emailQuotaExceeded = true;
+      console.log(`⚠️ Quota Exhausted: User ${user.name} initiated SOS but daily emergency emails are blocked (${user.dailySosEmailsCount}/${MAX_SOS_EMAILS_PER_DAY}).`);
+    } else {
+      // Increment the daily emails count
+      user.dailySosEmailsCount = (user.dailySosEmailsCount || 0) + 1;
+      await user.save();
+    }
+
     // 1. Create PanicEvent ID beforehand to construct the tracking link
     const panicEventId = new (PanicEvent.db.base.Types.ObjectId)();
     
@@ -42,34 +61,41 @@ router.post('/trigger', verifyToken, async (req, res) => {
       location: { lat, lng },
       locationHistory: [{ lat, lng, timestamp: new Date() }],
       trackingToken,
-      status: 'active'
+      status: 'active',
+      emailsEnabled: !emailQuotaExceeded,
+      secondaryAlertsSent: emailQuotaExceeded // If emails are disabled, mark Phase 2 as true so it doesn't trigger escalation dispatches either
     });
 
     await panicEvent.save();
 
     // 5. Send emails to PRIMARY trusted contacts immediately (Phase 1)
-    const contacts = user.trustedContacts || [];
-    const primaryContacts = contacts.filter(c => c.priority === 'primary' || !c.priority);
-    // If no contacts are explicitly primary, notify all contacts as a safe fallback
-    const targetImmediateContacts = primaryContacts.length > 0 ? primaryContacts : contacts;
+    if (!emailQuotaExceeded) {
+      const contacts = user.trustedContacts || [];
+      const primaryContacts = contacts.filter(c => c.priority === 'primary' || !c.priority);
+      // If no contacts are explicitly primary, notify all contacts as a safe fallback
+      const targetImmediateContacts = primaryContacts.length > 0 ? primaryContacts : contacts;
 
-    if (targetImmediateContacts.length > 0) {
-      sendPanicAlert(user, { lat, lng }, targetImmediateContacts, trackingLink)
-        .then(async (alerts) => {
-          // Update the alert logs on the PanicEvent document
-          await PanicEvent.findByIdAndUpdate(panicEventId, { alertsSent: alerts });
-          console.log(`Async Alert: Immediate (Phase 1) SOS emails logged for Panic ${panicEventId}`);
-        })
-        .catch((err) => {
-          console.error(`Async Alert: Failed to send Phase 1 immediate SOS emails for ${panicEventId}:`, err);
-        });
+      if (targetImmediateContacts.length > 0) {
+        sendPanicAlert(user, { lat, lng }, targetImmediateContacts, trackingLink)
+          .then(async (alerts) => {
+            // Update the alert logs on the PanicEvent document
+            await PanicEvent.findByIdAndUpdate(panicEventId, { alertsSent: alerts });
+            console.log(`Async Alert: Immediate (Phase 1) SOS emails logged for Panic ${panicEventId}`);
+          })
+          .catch((err) => {
+            console.error(`Async Alert: Failed to send Phase 1 immediate SOS emails for ${panicEventId}:`, err);
+          });
+      }
     }
 
     // 6. Instantly respond to client
     return res.status(201).json({
-      message: 'SOS Panic triggered successfully.',
+      message: emailQuotaExceeded 
+        ? 'SOS Panic triggered. Outbound email cap reached.'
+        : 'SOS Panic triggered successfully.',
       panicEventId: panicEvent._id,
-      trackingToken
+      trackingToken,
+      emailQuotaExceeded
     });
 
   } catch (error) {
