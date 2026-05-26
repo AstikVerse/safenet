@@ -44,6 +44,12 @@ router.post('/trigger', verifyToken, async (req, res) => {
       await user.save();
     }
 
+    // Auto-resolve any previous active SOS events for this user to prevent orphaned alarms
+    await PanicEvent.updateMany(
+      { userId: req.user.id, status: 'active' },
+      { status: 'resolved', resolvedAt: new Date() }
+    );
+
     // 1. Create PanicEvent ID beforehand to construct the tracking link
     const panicEventId = new (PanicEvent.db.base.Types.ObjectId)();
     

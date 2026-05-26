@@ -76,6 +76,16 @@ export const startCheckinWatcher = () => {
 
       for (const panic of activePanics) {
         try {
+          // Auto-resolve stale panics that have been active for more than 2 hours to prevent infinite emailing loops
+          const panicAgeMs = now.getTime() - new Date(panic.triggeredAt).getTime();
+          if (panicAgeMs >= 2 * 60 * 60 * 1000) {
+            panic.status = 'resolved';
+            panic.resolvedAt = now;
+            await panic.save();
+            console.log(`🧹 Watcher: Auto-resolved stale panic event ${panic._id} exceeding 2-hour safety threshold.`);
+            continue;
+          }
+
           const user = await User.findById(panic.userId);
           if (!user) {
             console.error(`User not found for panic event: ${panic._id}`);
