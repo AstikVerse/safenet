@@ -116,10 +116,28 @@ router.post('/test-contact', async (req, res) => {
       return res.status(404).json({ message: 'User not found.' });
     }
 
+    // Daily Email Rate Limiter Quota check for test alerts (Model B)
+    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    if (user.lastSosEmailDate !== todayStr) {
+      user.dailySosEmailsCount = 0;
+      user.lastSosEmailDate = todayStr;
+    }
+
+    const MAX_SOS_EMAILS_PER_DAY = parseInt(process.env.MAX_SOS_EMAILS_PER_DAY) || 3;
+    if (user.dailySosEmailsCount >= MAX_SOS_EMAILS_PER_DAY) {
+      return res.status(400).json({
+        message: 'Daily emergency email limit reached (3/3). Please try again tomorrow.'
+      });
+    }
+
     const contact = user.trustedContacts.find(c => c.email === email);
     if (!contact) {
       return res.status(404).json({ message: 'Contact not found in your trusted contacts list.' });
     }
+
+    // Increment count by 1 for this test email
+    user.dailySosEmailsCount = (user.dailySosEmailsCount || 0) + 1;
+    await user.save();
 
     // Call mailer with test link
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';

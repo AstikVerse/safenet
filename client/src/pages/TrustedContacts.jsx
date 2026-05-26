@@ -120,12 +120,37 @@ const TrustedContacts = () => {
 
       <main className="flex-1 p-6 flex flex-col gap-6">
         
-        {/* Info panel */}
-        <div className="bg-white border border-border-soft rounded-2xl p-4 shadow-card flex items-start gap-3">
-          <HelpCircle size={20} className="text-primary shrink-0 mt-0.5" />
-          <p className="text-xs text-dark-body leading-relaxed">
-            Your trusted contacts are your safety net. They receive live tracking links during an active SOS and alerts if you miss a check-in.
-          </p>
+        {/* Dynamic Sandbox Daily Email Cap Card (Model B) */}
+        <div className="bg-white border border-border-soft rounded-2xl p-4 shadow-card flex flex-col gap-3.5">
+          <div className="flex items-start gap-3">
+            <HelpCircle size={20} className="text-primary shrink-0 mt-0.5" />
+            <p className="text-xs text-dark-body leading-relaxed">
+              Your trusted contacts are your safety net. They receive live tracking links during an active SOS and alerts if you miss a check-in.
+            </p>
+          </div>
+          <div className="w-full border-t border-border-soft/50" />
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[10px] font-bold text-dark-muted tracking-wider uppercase">Daily Email Cap</span>
+              <span className="text-xs font-semibold text-dark-body">
+                {user?.dailySosEmailsCount >= 3 
+                  ? "Capped: Daily email limits reached." 
+                  : `Remaining daily emails: ${3 - (user?.dailySosEmailsCount || 0)}`}
+              </span>
+            </div>
+            {/* Progress Visual Bar */}
+            <div className="flex items-center gap-2">
+              <div className="w-24 bg-background-warm border border-border-soft h-3.5 rounded-full overflow-hidden flex p-[2px]">
+                <div 
+                  className={`h-full rounded-full ${user?.dailySosEmailsCount >= 3 ? 'bg-primary' : 'bg-secondary'}`}
+                  style={{ width: `${Math.min(100, ((user?.dailySosEmailsCount || 0) / 3) * 100)}%` }}
+                />
+              </div>
+              <span className="text-xs font-bold text-dark-heading">
+                {Math.min(3, user?.dailySosEmailsCount || 0)}/3
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Contacts Core list */}

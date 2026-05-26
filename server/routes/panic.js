@@ -35,12 +35,16 @@ router.post('/trigger', verifyToken, async (req, res) => {
     const MAX_SOS_EMAILS_PER_DAY = parseInt(process.env.MAX_SOS_EMAILS_PER_DAY) || 3;
     let emailQuotaExceeded = false;
 
+    const contacts = user.trustedContacts || [];
+    const primaryContacts = contacts.filter(c => c.priority === 'primary' || !c.priority);
+    const targetImmediateContacts = primaryContacts.length > 0 ? primaryContacts : contacts;
+
     if (user.dailySosEmailsCount >= MAX_SOS_EMAILS_PER_DAY) {
       emailQuotaExceeded = true;
       console.log(`⚠️ Quota Exhausted: User ${user.name} initiated SOS but daily emergency emails are blocked (${user.dailySosEmailsCount}/${MAX_SOS_EMAILS_PER_DAY}).`);
     } else {
-      // Increment the daily emails count
-      user.dailySosEmailsCount = (user.dailySosEmailsCount || 0) + 1;
+      // Increment the daily emails count by the actual number of primary emails to be dispatched (Model B)
+      user.dailySosEmailsCount = (user.dailySosEmailsCount || 0) + targetImmediateContacts.length;
       await user.save();
     }
 
