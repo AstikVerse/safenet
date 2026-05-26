@@ -1,6 +1,6 @@
-# SafeNet — Women's Safety Network Web App
+# SafeNet — Personal Safety Network Web App
 
-SafeNet is a complete, production-ready, MERN-stack social impact platform designed to protect and connect women through community alerts, safe check-in journeys, fuzzed area hazards, and real-time emergency SOS streaming. 
+SafeNet is a complete, production-ready, MERN-stack social impact platform designed to protect and connect individuals through community alerts, safe check-in journeys, fuzzed area hazards, and real-time emergency SOS streaming. 
 
 Incorporating dynamic mobile layouts, custom browser audio synthesizers, zero-cost native share integrations, and strict privacy-by-design principles, SafeNet delivers a modern native-app experience directly on the mobile web.
 

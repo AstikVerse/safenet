@@ -147,7 +147,7 @@ export const sendPanicAlert = async (user, location, contacts, trackingLink) => 
             <p style="font-size: 14px; color: #4A4A6A;">Please click the button above to view their live location in real time on SafeNet. The tracking link will be active for 2 hours.</p>
           </div>
           <div class="footer">
-            SafeNet Women's Safety Network © 2026. This is an automated emergency communication.
+            SafeNet Personal Safety Network © 2026. This is an automated emergency communication.
           </div>
         </div>
       </body>
@@ -266,7 +266,7 @@ export const sendCheckinAlert = async (user, location, contacts) => {
             <p style="font-size: 14px; color: #4A4A6A;">Please contact ${user.name} immediately to ensure their safety. If you cannot reach them, consider checking their last known location details above.</p>
           </div>
           <div class="footer">
-            SafeNet Women's Safety Network © 2026. This is an automated emergency communication.
+            SafeNet Personal Safety Network © 2026. This is an automated emergency communication.
           </div>
         </div>
       </body>
