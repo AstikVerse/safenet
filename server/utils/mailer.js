@@ -90,7 +90,11 @@ export const sendPanicAlert = async (user, location, contacts, trackingLink) => 
   if (!contacts || contacts.length === 0) return [];
   
   const useSendGrid = !!process.env.SENDGRID_API_KEY;
-  const timeString = new Date().toLocaleString();
+  const timeString = new Date().toLocaleString("en-US", {
+    timeZone: "Asia/Kolkata",
+    dateStyle: "medium",
+    timeStyle: "short"
+  }) + " (IST)";
   const results = [];
 
   for (const contact of contacts) {
@@ -204,7 +208,11 @@ export const sendCheckinAlert = async (user, location, contacts) => {
   if (!contacts || contacts.length === 0) return [];
   
   const useSendGrid = !!process.env.SENDGRID_API_KEY;
-  const timeString = new Date().toLocaleString();
+  const timeString = new Date().toLocaleString("en-US", {
+    timeZone: "Asia/Kolkata",
+    dateStyle: "medium",
+    timeStyle: "short"
+  }) + " (IST)";
   const results = [];
   const mapLink = `https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}`;
 
