@@ -59,7 +59,7 @@ export const startCheckinWatcher = () => {
     }
   });
 
-  // 2. Run Panic SOS periodic emailing check every 30 seconds
+  // 2. Run Panic SOS active watchers every 30 seconds (Phase 2 priority escalation + 5m updates)
   cron.schedule('*/30 * * * * *', async () => {
     try {
       const now = new Date();
@@ -67,41 +67,64 @@ export const startCheckinWatcher = () => {
       const activePanics = await PanicEvent.find({ status: 'active' });
       if (activePanics.length === 0) return;
 
-      // 5-minute interval for periodic alerting
+      // Configurable Escalation Delay (Default: 10 minutes)
+      const ESCALATION_DELAY_MINUTES = parseInt(process.env.ESCALATION_DELAY_MINUTES) || 10;
+      const ESCALATION_DELAY_MS = ESCALATION_DELAY_MINUTES * 60 * 1000;
+
+      // 5-minute interval for standard periodic updates
       const EMAIL_INTERVAL_MS = 5 * 60 * 1000;
 
       for (const panic of activePanics) {
         try {
-          const lastSentTime = new Date(panic.lastEmailSentAt || panic.triggeredAt).getTime();
-          if (now.getTime() - lastSentTime < EMAIL_INTERVAL_MS) {
-            continue; // Not enough time has elapsed
-          }
-
           const user = await User.findById(panic.userId);
           if (!user) {
             console.error(`User not found for panic event: ${panic._id}`);
             continue;
           }
 
-          console.log(`🚨 Periodic SOS Alert: Sending update for active panic of ${user.name}...`);
+          const contacts = user.trustedContacts || [];
+          if (contacts.length === 0) continue;
 
           const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
           const trackingLink = `${clientUrl}/track/${panic._id}?token=${panic.trackingToken}`;
-          const contacts = user.trustedContacts || [];
 
-          if (contacts.length > 0) {
-            // Send email to contacts with the LATEST location coordinates
+          // Check if Phase 2 Secondary Escalation is due
+          const elapsedMs = now.getTime() - new Date(panic.triggeredAt).getTime();
+          if (!panic.secondaryAlertsSent && elapsedMs >= ESCALATION_DELAY_MS) {
+            console.log(`🚨 Priority Escalation: Active SOS for ${user.name} has been active for ${ESCALATION_DELAY_MINUTES} min. Dispatched Phase 2 escalation to all contacts...`);
+
+            // Email primary & secondary contacts with latest coordinates
             const sentResults = await sendPanicAlert(user, panic.location, contacts, trackingLink);
-            
-            // Append new alerts log to alertsSent array
+
+            // Update alert metadata
             panic.alertsSent.push(...sentResults);
+            panic.secondaryAlertsSent = true;
+            panic.lastEmailSentAt = now;
+            await panic.save();
+            continue; // Proceed to next panic
           }
 
-          // Update lastEmailSentAt timestamp
-          panic.lastEmailSentAt = now;
-          await panic.save();
+          // Otherwise, run standard 5-minute periodic updates (only after Phase 2 has fired, or for primary contacts if no secondary exists)
+          const lastSentTime = new Date(panic.lastEmailSentAt || panic.triggeredAt).getTime();
+          if (now.getTime() - lastSentTime >= EMAIL_INTERVAL_MS) {
+            console.log(`🚨 Periodic SOS Alert: Sending 5m update for active panic of ${user.name}...`);
 
-          console.log(`✅ Periodic SOS Alert: Updated for panic event ${panic._id}.`);
+            // If secondary alerts have not been sent yet (we are still within the 10-minute window),
+            // periodic updates should only go to PRIMARY contacts!
+            // Once secondary alerts are sent, periodic updates go to ALL contacts!
+            const targetContacts = panic.secondaryAlertsSent 
+              ? contacts 
+              : contacts.filter(c => c.priority === 'primary' || !c.priority);
+
+            if (targetContacts.length > 0) {
+              const sentResults = await sendPanicAlert(user, panic.location, targetContacts, trackingLink);
+              panic.alertsSent.push(...sentResults);
+            }
+
+            panic.lastEmailSentAt = now;
+            await panic.save();
+            console.log(`✅ Periodic SOS Alert: Updated for panic event ${panic._id}.`);
+          }
         } catch (err) {
           console.error(`Error processing periodic panic email update for ${panic._id}:`, err);
         }

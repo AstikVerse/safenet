@@ -42,6 +42,11 @@ const panicEventSchema = new mongoose.Schema({
     default: 'active',
     required: true
   },
+  secondaryAlertsSent: {
+    type: Boolean,
+    default: false,
+    required: true
+  },
   lastEmailSentAt: {
     type: Date,
     default: Date.now

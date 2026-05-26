@@ -17,6 +17,11 @@ const trustedContactSchema = new mongoose.Schema({
     required: true,
     trim: true,
     lowercase: true
+  },
+  priority: {
+    type: String,
+    enum: ['primary', 'secondary'],
+    default: 'primary'
   }
 });
 

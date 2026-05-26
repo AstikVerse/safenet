@@ -47,17 +47,21 @@ router.post('/trigger', verifyToken, async (req, res) => {
 
     await panicEvent.save();
 
-    // 5. Send emails to trusted contacts asynchronously to maintain <300ms speed
+    // 5. Send emails to PRIMARY trusted contacts immediately (Phase 1)
     const contacts = user.trustedContacts || [];
-    if (contacts.length > 0) {
-      sendPanicAlert(user, { lat, lng }, contacts, trackingLink)
+    const primaryContacts = contacts.filter(c => c.priority === 'primary' || !c.priority);
+    // If no contacts are explicitly primary, notify all contacts as a safe fallback
+    const targetImmediateContacts = primaryContacts.length > 0 ? primaryContacts : contacts;
+
+    if (targetImmediateContacts.length > 0) {
+      sendPanicAlert(user, { lat, lng }, targetImmediateContacts, trackingLink)
         .then(async (alerts) => {
           // Update the alert logs on the PanicEvent document
           await PanicEvent.findByIdAndUpdate(panicEventId, { alertsSent: alerts });
-          console.log(`Async Alert: SOS mails logged for Panic ${panicEventId}`);
+          console.log(`Async Alert: Immediate (Phase 1) SOS emails logged for Panic ${panicEventId}`);
         })
         .catch((err) => {
-          console.error(`Async Alert: Failed to send SOS emails for ${panicEventId}:`, err);
+          console.error(`Async Alert: Failed to send Phase 1 immediate SOS emails for ${panicEventId}:`, err);
         });
     }
 

@@ -10,7 +10,7 @@ const TrustedContacts = () => {
 
   // Add Contact Form States
   const [showAddForm, setShowAddForm] = useState(false);
-  const [formData, setFormData] = useState({ name: '', phone: '', email: '' });
+  const [formData, setFormData] = useState({ name: '', phone: '', email: '', priority: 'primary' });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [testingEmail, setTestingEmail] = useState(null); // stores email currently testing
@@ -66,7 +66,7 @@ const TrustedContacts = () => {
     setSubmitting(false);
 
     if (res.success) {
-      setFormData({ name: '', phone: '', email: '' });
+      setFormData({ name: '', phone: '', email: '', priority: 'primary' });
       setShowAddForm(false);
       refreshProfile(); // Sync details
       if (navigator.vibrate) navigator.vibrate(50);
@@ -168,8 +168,17 @@ const TrustedContacts = () => {
                       {contact.name.substring(0, 2).toUpperCase()}
                     </div>
                     <div className="flex flex-col">
-                      <h4 className="text-sm font-bold text-dark-heading leading-tight">{contact.name}</h4>
-                      <p className="text-[10px] text-dark-muted mt-1 flex items-center gap-1">
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-bold text-dark-heading leading-tight">{contact.name}</h4>
+                        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full border ${
+                          contact.priority === 'secondary'
+                            ? 'bg-secondary-light text-secondary border-secondary/10'
+                            : 'bg-primary-light text-primary border-primary/10'
+                        }`}>
+                          {contact.priority === 'secondary' ? 'Secondary' : 'Primary'}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-dark-muted mt-1.5 flex items-center gap-1">
                         <Phone size={10} /> {contact.phone}
                       </p>
                       <p className="text-[10px] text-dark-muted mt-0.5 flex items-center gap-1">
@@ -273,6 +282,20 @@ const TrustedContacts = () => {
                   } focus:border-primary focus:ring-1 focus:ring-primary rounded-xl px-4 py-3 text-xs text-dark-body outline-none interactive-transition`}
                 />
                 {errors.email && <span className="text-[10px] font-medium text-primary mt-0.5">{errors.email}</span>}
+              </div>
+
+              {/* Priority */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-dark-heading tracking-wider">CONTACT ESCALATION PRIORITY</label>
+                <select
+                  name="priority"
+                  value={formData.priority}
+                  onChange={handleChange}
+                  className="w-full bg-white border border-border-soft focus:border-primary focus:ring-1 focus:ring-primary rounded-xl px-4 py-3 text-xs text-dark-body outline-none interactive-transition"
+                >
+                  <option value="primary">🎯 Primary (Notify Instantly)</option>
+                  <option value="secondary">⏳ Secondary (Notify after 10m delay)</option>
+                </select>
               </div>
 
               {/* Submit add */}
