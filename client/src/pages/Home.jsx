@@ -40,6 +40,7 @@ const Home = () => {
   const [panicStatus, setPanicStatus] = useState('idle'); // idle | triggered | active | resolving
   const [flashScreen, setFlashScreen] = useState(false);
   const [quotaExceeded, setQuotaExceeded] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
   const holdTimer = useRef(null);
   const gpsInterval = useRef(null);
@@ -157,6 +158,13 @@ const Home = () => {
       setPanicEvent(newPanic);
       setQuotaExceeded(!!emailQuotaExceeded);
       setPanicStatus('active');
+
+      if (emailQuotaExceeded) {
+        setShowToast(true);
+        setTimeout(() => {
+          setShowToast(false);
+        }, 6000);
+      }
 
       // Persist locally so page reloads don't lose emergency tracking
       localStorage.setItem('safenet_active_panic_id', panicEventId);
@@ -335,9 +343,17 @@ const Home = () => {
                 </p>
               </div>
             ) : (
-              <p className="text-sm text-dark-body mt-2 leading-relaxed max-w-[280px]">
-                Trusted contacts and safety rooms have been alerted. Streaming live location.
-              </p>
+              <>
+                <p className="text-sm text-dark-body mt-2 leading-relaxed max-w-[280px]">
+                  Trusted contacts and safety rooms have been alerted. Streaming live location.
+                </p>
+                {/* Success Quota reminder card */}
+                <div className="bg-background-warm border border-border-soft rounded-xl px-4 py-2 mt-3.5 w-full text-center">
+                  <span className="text-[9px] font-bold text-dark-muted tracking-wider uppercase">
+                    Quota Used: {Math.min(3, user?.trustedContacts?.length || 0)}/3 credits this session.
+                  </span>
+                </div>
+              </>
             )}
 
             <div className="w-full border-t border-border-soft/60 my-5" />
@@ -490,6 +506,21 @@ const Home = () => {
         )}
 
       </main>
+
+      {/* Premium Slide-in bottom Toast Notification */}
+      {showToast && (
+        <div className="absolute bottom-28 right-4 left-4 bg-dark-heading/95 backdrop-blur-md text-white rounded-2xl p-4 shadow-2xl border border-white/10 flex items-start gap-3 z-50 animate-fade-in-up">
+          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+            <span className="text-primary font-black">⚠️</span>
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <h4 className="text-xs font-bold text-white tracking-wide">Email Limit Crossed</h4>
+            <p className="text-[10px] text-white/80 leading-relaxed font-semibold">
+              Your daily emergency email cap is exhausted. Trusted contacts will not receive email alerts, but all local tracking tools remain active!
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Footer bottom navigation bar */}
       <BottomNav />
