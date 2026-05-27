@@ -93,6 +93,14 @@ io.on('connection', (socket) => {
       return;
     }
 
+    // Handle mock tracking socket connection for test alert emails sandbox
+    if (panicId === 'test-panic-id' && token === 'test-token') {
+      const roomName = `panic_test-panic-id`;
+      socket.join(roomName);
+      console.log(`👤 Contact socket ${socket.id} joined mock tracking room: ${roomName}`);
+      return;
+    }
+
     // Verify tracking token validity
     const decoded = verifyTrackingToken(token);
     if (!decoded || decoded.panicId !== panicId) {

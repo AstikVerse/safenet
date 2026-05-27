@@ -167,6 +167,23 @@ router.get('/:id/track', async (req, res) => {
     return res.status(401).json({ message: 'Tracking access denied. Token missing.' });
   }
 
+  // Handle mock tracking case for test alert emails (bypasses JWT validation for safe local sandbox demo)
+  if (id === 'test-panic-id' && token === 'test-token') {
+    return res.status(200).json({
+      panicId: 'test-panic-id',
+      userName: 'Demo Safety User',
+      userPhone: '+91 98765 43210',
+      emergencyMessage: 'This is a sandbox test alert email! SafeNet personal safety network is fully operational.',
+      triggeredAt: new Date(),
+      location: { lat: 28.6139, lng: 77.2090 }, // New Delhi coordinates
+      locationHistory: [
+        { lat: 28.6120, lng: 77.2070, timestamp: new Date(Date.now() - 60000) },
+        { lat: 28.6139, lng: 77.2090, timestamp: new Date() }
+      ],
+      status: 'active'
+    });
+  }
+
   // Verify the tracking JWT token
   const decoded = verifyTrackingToken(token);
   if (!decoded || decoded.panicId !== id) {
