@@ -140,11 +140,11 @@ export const sendPanicAlert = async (user, location, contacts, trackingLink) => 
 
             <ul class="info-list">
               <li class="info-item"><span class="info-label">Triggered At:</span> ${timeString}</li>
-              <li class="info-item"><span class="info-label">Last Known GPS:</span> lat: ${location.lat}, lng: ${location.lng}</li>
+              <li class="info-item"><span class="info-label">Last Known GPS:</span> <a href="https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}" style="color: #F43F5E; text-decoration: underline; font-weight: 600;" target="_blank">lat: ${location.lat}, lng: ${location.lng} (Click to open Google Maps)</a></li>
               <li class="info-item"><span class="info-label">Contact User:</span> <a href="tel:${user.phone}" style="color: #8B5CF6; text-decoration: none; font-weight: 600;">Call ${user.phone}</a></li>
             </ul>
 
-            <p style="font-size: 14px; color: #4A4A6A;">Please click the button above to view their live location in real time on SafeNet. The tracking link will be active for 2 hours.</p>
+            <p style="font-size: 14px; color: #4A4A6A;">Please click the button above to track their live movement in real time on the SafeNet Portal. If the tracking portal is inaccessible or you are experiencing connection issues, you can instantly view their exact location on <a href="https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}" style="color: #F43F5E; text-decoration: underline; font-weight: 600;" target="_blank">Google Maps Here</a>.</p>
           </div>
           <div class="footer">
             SafeNet Personal Safety Network © 2026. This is an automated emergency communication.
