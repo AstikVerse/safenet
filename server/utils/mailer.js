@@ -98,56 +98,80 @@ export const sendPanicAlert = async (user, location, contacts, trackingLink) => 
   const results = [];
 
   for (const contact of contacts) {
+    const textFallback = `
+SafeNet Safety Notification: ${user.name}
+
+Hello ${contact.name},
+
+Your trusted contact, ${user.name}, has shared a personal safety update with you. They have requested that you review their live coordinates status.
+
+Their Safety Message:
+"${user.emergencyMessage || 'I need help. This is my live location.'}"
+
+Track Real-time Location on SafeNet Portal:
+${trackingLink}
+
+View on Google Maps (Fail-safe):
+https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}
+
+Details:
+- Time: ${timeString}
+- GPS Coordinates: lat: ${location.lat}, lng: ${location.lng}
+- Contact Phone: ${user.phone}
+
+This is a personal safety communication sent via SafeNet Safety Network.
+`;
+
     const html = `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="utf-8">
-        <title>URGENT SAFETY ALERT - SafeNet</title>
+        <title>Safety Status Notification - SafeNet</title>
         <style>
-          body { font-family: 'Inter', sans-serif; background-color: #FFF7F7; color: #1A1A2E; margin: 0; padding: 20px; line-height: 1.6; }
-          .container { max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border: 1px solid #F1D5D8; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-          .header { background-color: #F43F5E; padding: 24px; text-align: center; color: #FFFFFF; font-weight: 600; font-size: 22px; letter-spacing: 0.5px; }
+          body { font-family: 'Inter', sans-serif; background-color: #F8FAFC; color: #1E293B; margin: 0; padding: 20px; line-height: 1.6; }
+          .container { max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+          .header { background-color: #334155; padding: 24px; text-align: center; color: #FFFFFF; font-weight: 600; font-size: 20px; letter-spacing: 0.5px; }
           .content { padding: 32px 24px; }
-          .greeting { font-size: 18px; font-weight: 600; margin-bottom: 16px; color: #1A1A2E; }
-          .alert-box { background-color: #FFF7F7; border-left: 4px solid #F43F5E; padding: 16px; border-radius: 8px; margin: 20px 0; }
-          .alert-msg { font-style: italic; color: #4A4A6A; font-size: 16px; margin: 0; }
+          .greeting { font-size: 18px; font-weight: 600; margin-bottom: 16px; color: #1E293B; }
+          .alert-box { background-color: #F1F5F9; border-left: 4px solid #475569; padding: 16px; border-radius: 8px; margin: 20px 0; }
+          .alert-msg { font-style: italic; color: #475569; font-size: 16px; margin: 0; }
           .btn-container { text-align: center; margin: 32px 0; }
-          .btn { background-color: #F43F5E; color: #FFFFFF !important; text-decoration: none; padding: 14px 32px; border-radius: 50px; font-weight: 600; font-size: 16px; display: inline-block; box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3); transition: all 200ms ease; }
+          .btn { background-color: #334155; color: #FFFFFF !important; text-decoration: none; padding: 14px 32px; border-radius: 50px; font-weight: 600; font-size: 16px; display: inline-block; box-shadow: 0 4px 12px rgba(51, 65, 85, 0.2); transition: all 200ms ease; }
           .info-list { list-style: none; padding: 0; margin: 24px 0; }
-          .info-item { padding: 8px 0; border-bottom: 1px solid #F1D5D8; color: #4A4A6A; font-size: 15px; }
-          .info-label { font-weight: 600; color: #1A1A2E; }
-          .footer { text-align: center; padding: 20px; font-size: 12px; color: #8888A8; border-top: 1px solid #F1D5D8; }
+          .info-item { padding: 8px 0; border-bottom: 1px solid #E2E8F0; color: #475569; font-size: 15px; }
+          .info-label { font-weight: 600; color: #1E293B; }
+          .footer { text-align: center; padding: 20px; font-size: 12px; color: #64748B; border-top: 1px solid #E2E8F0; }
         </style>
       </head>
       <body>
         <div class="container">
           <div class="header">
-            ⚠️ URGENT SAFETY ALERT
+            SafeNet Safety Notification
           </div>
           <div class="content">
             <div class="greeting">Hello ${contact.name},</div>
-            <p>Your trusted contact, <strong>${user.name}</strong>, has triggered an emergency SOS alert. They need your assistance immediately.</p>
+            <p>Your trusted contact, <strong>${user.name}</strong>, has shared a personal safety status update with you.</p>
             
             <div class="alert-box">
-              <p class="info-label" style="margin-top:0; margin-bottom: 6px;">Their Emergency Message:</p>
+              <p class="info-label" style="margin-top:0; margin-bottom: 6px;">Their Message:</p>
               <p class="alert-msg">"${user.emergencyMessage || 'I need help. This is my live location.'}"</p>
             </div>
 
             <div class="btn-container">
-              <a href="${trackingLink}" class="btn" target="_blank">View Live Location</a>
+              <a href="${trackingLink}" class="btn" target="_blank">Track Real-time Location</a>
             </div>
 
             <ul class="info-list">
-              <li class="info-item"><span class="info-label">Triggered At:</span> ${timeString}</li>
-              <li class="info-item"><span class="info-label">Last Known GPS:</span> <a href="https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}" style="color: #F43F5E; text-decoration: underline; font-weight: 600;" target="_blank">lat: ${location.lat}, lng: ${location.lng} (Click to open Google Maps)</a></li>
-              <li class="info-item"><span class="info-label">Contact User:</span> <a href="tel:${user.phone}" style="color: #8B5CF6; text-decoration: none; font-weight: 600;">Call ${user.phone}</a></li>
+              <li class="info-item"><span class="info-label">Notification Time:</span> ${timeString}</li>
+              <li class="info-item"><span class="info-label">Last Known GPS:</span> <a href="https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}" style="color: #3b82f6; text-decoration: underline; font-weight: 600;" target="_blank">lat: ${location.lat}, lng: ${location.lng} (Click to open Google Maps)</a></li>
+              <li class="info-item"><span class="info-label">Contact User:</span> <a href="tel:${user.phone}" style="color: #6366f1; text-decoration: none; font-weight: 600;">Call ${user.phone}</a></li>
             </ul>
 
-            <p style="font-size: 14px; color: #4A4A6A;">Please click the button above to track their live movement in real time on the SafeNet Portal. If the tracking portal is inaccessible or you are experiencing connection issues, you can instantly view their exact location on <a href="https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}" style="color: #F43F5E; text-decoration: underline; font-weight: 600;" target="_blank">Google Maps Here</a>.</p>
+            <p style="font-size: 14px; color: #475569;">Please click the button above to track their live coordinates on the SafeNet Portal. If the tracking portal is inaccessible, you can instantly view their exact location on <a href="https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}" style="color: #3b82f6; text-decoration: underline; font-weight: 600;" target="_blank">Google Maps Here</a>.</p>
           </div>
           <div class="footer">
-            SafeNet Personal Safety Network © 2026. This is an automated emergency communication.
+            SafeNet Personal Safety Network © 2026. This is an automated safety communication.
           </div>
         </div>
       </body>
@@ -165,13 +189,19 @@ export const sendPanicAlert = async (user, location, contacts, trackingLink) => 
           }],
           from: {
             email: fromEmail,
-            name: 'SafeNet Emergency Alert'
+            name: 'SafeNet Safety Network'
           },
-          subject: `⚠️ URGENT: Emergency SOS Alert from ${user.name}`,
-          content: [{
-            type: 'text/html',
-            value: html
-          }]
+          subject: `[SafeNet] Safety Status Update for ${user.name}`,
+          content: [
+            {
+              type: 'text/plain',
+              value: textFallback
+            },
+            {
+              type: 'text/html',
+              value: html
+            }
+          ]
         };
 
         await sendGridPost(apiKey, bodyData);
@@ -185,9 +215,10 @@ export const sendPanicAlert = async (user, location, contacts, trackingLink) => 
       try {
         const transporter = await createTransporter();
         await transporter.sendMail({
-          from: `"SafeNet Emergency Alert" <${process.env.GMAIL_USER || 'safenet-alert@ethereal.email'}>`,
+          from: `"SafeNet Safety Network" <${process.env.GMAIL_USER || 'safenet-alert@ethereal.email'}>`,
           to: contact.email,
-          subject: `⚠️ URGENT: Emergency SOS Alert from ${user.name}`,
+          subject: `[SafeNet] Safety Status Update for ${user.name}`,
+          text: textFallback,
           html
         });
         console.log(`Email sent successfully via SMTP to ${contact.name} (${contact.email})`);
@@ -217,56 +248,76 @@ export const sendCheckinAlert = async (user, location, contacts) => {
   const mapLink = `https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}`;
 
   for (const contact of contacts) {
+    const textFallback = `
+SafeNet Safety Check-in Update: ${user.name}
+
+Hello ${contact.name},
+
+Your trusted contact, ${user.name}, started a scheduled check-in on SafeNet. The check-in timer has concluded without a safe confirmation.
+
+As a safety precaution, please get in touch with ${user.name} to confirm their status.
+
+View Last Known GPS Coordinates on Google Maps:
+${mapLink}
+
+Details:
+- Concluded Time: ${timeString}
+- Last Known GPS: lat: ${location.lat}, lng: ${location.lng}
+- Contact Phone: ${user.phone}
+
+This is a personal safety communication sent via SafeNet Safety Network.
+`;
+
     const html = `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="utf-8">
-        <title>MISSED CHECK-IN ALERT - SafeNet</title>
+        <title>Safety Check-in Notification - SafeNet</title>
         <style>
-          body { font-family: 'Inter', sans-serif; background-color: #FFF7F7; color: #1A1A2E; margin: 0; padding: 20px; line-height: 1.6; }
-          .container { max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border: 1px solid #F1D5D8; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-          .header { background-color: #8B5CF6; padding: 24px; text-align: center; color: #FFFFFF; font-weight: 600; font-size: 22px; letter-spacing: 0.5px; }
+          body { font-family: 'Inter', sans-serif; background-color: #F8FAFC; color: #1E293B; margin: 0; padding: 20px; line-height: 1.6; }
+          .container { max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+          .header { background-color: #475569; padding: 24px; text-align: center; color: #FFFFFF; font-weight: 600; font-size: 20px; letter-spacing: 0.5px; }
           .content { padding: 32px 24px; }
-          .greeting { font-size: 18px; font-weight: 600; margin-bottom: 16px; color: #1A1A2E; }
-          .alert-box { background-color: #FFF7F7; border-left: 4px solid #8B5CF6; padding: 16px; border-radius: 8px; margin: 20px 0; }
-          .alert-msg { font-style: italic; color: #4A4A6A; font-size: 16px; margin: 0; }
+          .greeting { font-size: 18px; font-weight: 600; margin-bottom: 16px; color: #1E293B; }
+          .alert-box { background-color: #F1F5F9; border-left: 4px solid #64748B; padding: 16px; border-radius: 8px; margin: 20px 0; }
+          .alert-msg { font-style: italic; color: #475569; font-size: 16px; margin: 0; }
           .btn-container { text-align: center; margin: 32px 0; }
-          .btn { background-color: #8B5CF6; color: #FFFFFF !important; text-decoration: none; padding: 14px 32px; border-radius: 50px; font-weight: 600; font-size: 16px; display: inline-block; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); transition: all 200ms ease; }
+          .btn { background-color: #475569; color: #FFFFFF !important; text-decoration: none; padding: 14px 32px; border-radius: 50px; font-weight: 600; font-size: 16px; display: inline-block; box-shadow: 0 4px 12px rgba(71, 85, 105, 0.2); transition: all 200ms ease; }
           .info-list { list-style: none; padding: 0; margin: 24px 0; }
-          .info-item { padding: 8px 0; border-bottom: 1px solid #F1D5D8; color: #4A4A6A; font-size: 15px; }
-          .info-label { font-weight: 600; color: #1A1A2E; }
-          .footer { text-align: center; padding: 20px; font-size: 12px; color: #8888A8; border-top: 1px solid #F1D5D8; }
+          .info-item { padding: 8px 0; border-bottom: 1px solid #E2E8F0; color: #475569; font-size: 15px; }
+          .info-label { font-weight: 600; color: #1E293B; }
+          .footer { text-align: center; padding: 20px; font-size: 12px; color: #64748B; border-top: 1px solid #E2E8F0; }
         </style>
       </head>
       <body>
         <div class="container">
           <div class="header">
-            ⚠️ MISSED CHECK-IN ALERT
+            SafeNet Check-in Notification
           </div>
           <div class="content">
             <div class="greeting">Hello ${contact.name},</div>
-            <p>Your trusted contact, <strong>${user.name}</strong>, started a safety check-in on SafeNet but **did not check in as safe** before the timer expired.</p>
+            <p>Your trusted contact, <strong>${user.name}</strong>, started a scheduled check-in on SafeNet. The check-in timer has concluded without a safe confirmation.</p>
             
             <div class="alert-box">
               <p class="info-label" style="margin-top:0; margin-bottom: 6px;">Status:</p>
-              <p class="alert-msg">Safe check-in timer has expired without cancellation. This is a safety precaution.</p>
+              <p class="alert-msg">Scheduled check-in timer has concluded without safe confirmation. As a safety precaution, please confirm they are safe.</p>
             </div>
 
             <div class="btn-container">
-              <a href="${mapLink}" class="btn" target="_blank">View Last Known GPS Map</a>
+              <a href="${mapLink}" class="btn" target="_blank">View Last Known Location</a>
             </div>
 
             <ul class="info-list">
-              <li class="info-item"><span class="info-label">Alert Time:</span> ${timeString}</li>
-              <li class="info-item"><span class="info-label">Last Known GPS:</span> lat: ${location.lat}, lng: ${location.lng}</li>
-              <li class="info-item"><span class="info-label">Contact User:</span> <a href="tel:${user.phone}" style="color: #8B5CF6; text-decoration: none; font-weight: 600;">Call ${user.phone}</a></li>
+              <li class="info-item"><span class="info-label">Notification Time:</span> ${timeString}</li>
+              <li class="info-item"><span class="info-label">Last Known GPS:</span> <a href="${mapLink}" style="color: #3b82f6; text-decoration: underline; font-weight: 600;" target="_blank">lat: ${location.lat}, lng: ${location.lng} (Click to open Google Maps)</a></li>
+              <li class="info-item"><span class="info-label">Contact User:</span> <a href="tel:${user.phone}" style="color: #6366f1; text-decoration: none; font-weight: 600;">Call ${user.phone}</a></li>
             </ul>
 
-            <p style="font-size: 14px; color: #4A4A6A;">Please contact ${user.name} immediately to ensure their safety. If you cannot reach them, consider checking their last known location details above.</p>
+            <p style="font-size: 14px; color: #475569;">Please get in touch with ${user.name} to confirm their status. If you cannot reach them, consider checking their last known location details above.</p>
           </div>
           <div class="footer">
-            SafeNet Personal Safety Network © 2026. This is an automated emergency communication.
+            SafeNet Personal Safety Network © 2026. This is an automated safety communication.
           </div>
         </div>
       </body>
@@ -284,13 +335,19 @@ export const sendCheckinAlert = async (user, location, contacts) => {
           }],
           from: {
             email: fromEmail,
-            name: 'SafeNet Emergency Alert'
+            name: 'SafeNet Safety Network'
           },
-          subject: `⚠️ URGENT: ${user.name} check-in missed`,
-          content: [{
-            type: 'text/html',
-            value: html
-          }]
+          subject: `[SafeNet] Safety Check-in Update for ${user.name}`,
+          content: [
+            {
+              type: 'text/plain',
+              value: textFallback
+            },
+            {
+              type: 'text/html',
+              value: html
+            }
+          ]
         };
 
         await sendGridPost(apiKey, bodyData);
@@ -304,9 +361,10 @@ export const sendCheckinAlert = async (user, location, contacts) => {
       try {
         const transporter = await createTransporter();
         await transporter.sendMail({
-          from: `"SafeNet Emergency Alert" <${process.env.GMAIL_USER || 'safenet-alert@ethereal.email'}>`,
+          from: `"SafeNet Safety Network" <${process.env.GMAIL_USER || 'safenet-alert@ethereal.email'}>`,
           to: contact.email,
-          subject: `⚠️ URGENT: ${user.name} check-in missed`,
+          subject: `[SafeNet] Safety Check-in Update for ${user.name}`,
+          text: textFallback,
           html
         });
         console.log(`Check-in alert email sent successfully to ${contact.name} (${contact.email})`);
