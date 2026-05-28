@@ -42,7 +42,7 @@ const sendGridPost = (apiKey, bodyData) => {
 };
 
 const createTransporter = async () => {
-  const user = process.env.GMAIL_USER;
+  const user = process.env.EMAIL_USER || process.env.GMAIL_USER;
   const pass = process.env.GMAIL_APP_PASSWORD;
 
   if (user && user !== 'yourgmail@gmail.com' && pass && pass !== 'your_16char_app_password') {
@@ -195,7 +195,7 @@ Automated trusted contact communication.
     if (useSendGrid) {
       try {
         const apiKey = process.env.SENDGRID_API_KEY;
-        const fromEmail = process.env.SENDGRID_FROM_EMAIL || process.env.GMAIL_USER;
+        const fromEmail = process.env.SENDGRID_FROM_EMAIL || process.env.EMAIL_USER || process.env.GMAIL_USER;
         
         const bodyData = {
           personalizations: [{
@@ -203,7 +203,7 @@ Automated trusted contact communication.
           }],
           from: {
             email: fromEmail,
-            name: 'SafeNet Safety Network'
+            name: 'SafeNet Safety Alerts'
           },
           subject: `SafeNet Safety Update — Live Tracking Available`,
           content: [
@@ -229,7 +229,7 @@ Automated trusted contact communication.
       try {
         const transporter = await createTransporter();
         await transporter.sendMail({
-          from: `"SafeNet Safety Network" <${process.env.GMAIL_USER || 'safenet-alert@ethereal.email'}>`,
+          from: `"SafeNet Safety Alerts" <${process.env.EMAIL_USER || process.env.GMAIL_USER || 'safenet-alert@ethereal.email'}>`,
           to: contact.email,
           subject: `SafeNet Safety Update — Live Tracking Available`,
           text: textFallback,
@@ -359,7 +359,7 @@ Automated trusted contact communication.
     if (useSendGrid) {
       try {
         const apiKey = process.env.SENDGRID_API_KEY;
-        const fromEmail = process.env.SENDGRID_FROM_EMAIL || process.env.GMAIL_USER;
+        const fromEmail = process.env.SENDGRID_FROM_EMAIL || process.env.EMAIL_USER || process.env.GMAIL_USER;
         
         const bodyData = {
           personalizations: [{
@@ -367,7 +367,7 @@ Automated trusted contact communication.
           }],
           from: {
             email: fromEmail,
-            name: 'SafeNet Safety Network'
+            name: 'SafeNet Safety Alerts'
           },
           subject: `SafeNet Check-in Update — Timer Concluded`,
           content: [
@@ -393,7 +393,7 @@ Automated trusted contact communication.
       try {
         const transporter = await createTransporter();
         await transporter.sendMail({
-          from: `"SafeNet Safety Network" <${process.env.GMAIL_USER || 'safenet-alert@ethereal.email'}>`,
+          from: `"SafeNet Safety Alerts" <${process.env.EMAIL_USER || process.env.GMAIL_USER || 'safenet-alert@ethereal.email'}>`,
           to: contact.email,
           subject: `SafeNet Check-in Update — Timer Concluded`,
           text: textFallback,
