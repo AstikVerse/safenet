@@ -90,35 +90,21 @@ export const sendPanicAlert = async (user, location, contacts, trackingLink) => 
   if (!contacts || contacts.length === 0) return [];
   
   const useSendGrid = !!process.env.SENDGRID_API_KEY;
-  const timeString = new Date().toLocaleString("en-US", {
-    timeZone: "Asia/Kolkata",
-    dateStyle: "medium",
-    timeStyle: "short"
-  }) + " (IST)";
   const results = [];
 
   for (const contact of contacts) {
     const textFallback = `
-SafeNet Personal Safety Update
+SafeNet Trusted Contact Update
 
 Hello ${contact.name},
 
-Your trusted contact ${user.name} has activated a SafeNet safety session and shared their current location with you.
+Your trusted contact ${user.name} has shared a personal safety update with you.
 
 Safety Status:
 Live location tracking is currently active.
 
-Notification Time:
-${timeString}
-
-Current Coordinates:
-Latitude: ${location.lat}
-Longitude: ${location.lng}
-
 Available Actions:
-• View live tracking in SafeNet: ${trackingLink}
-• Open current location in Google Maps: https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}
-• Contact trusted user directly: tel:${user.phone}
+• Track Live Location: ${trackingLink}
 
 Why am I receiving this?
 You are receiving this notification because you were added as a trusted contact in SafeNet.
@@ -132,7 +118,7 @@ Automated trusted contact communication.
       <html>
       <head>
         <meta charset="utf-8">
-        <title>SafeNet Personal Safety Update</title>
+        <title>SafeNet Trusted Contact Update</title>
         <style>
           body { font-family: 'Inter', sans-serif; background-color: #F8FAFC; color: #1E293B; margin: 0; padding: 20px; line-height: 1.6; }
           .container { max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
@@ -143,20 +129,17 @@ Automated trusted contact communication.
           .alert-msg { font-style: italic; color: #475569; font-size: 16px; margin: 0; }
           .btn-container { text-align: center; margin: 32px 0; }
           .btn { background-color: #334155; color: #FFFFFF !important; text-decoration: none; padding: 14px 32px; border-radius: 50px; font-weight: 600; font-size: 16px; display: inline-block; box-shadow: 0 4px 12px rgba(51, 65, 85, 0.2); transition: all 200ms ease; }
-          .info-list { list-style: none; padding: 0; margin: 24px 0; }
-          .info-item { padding: 8px 0; border-bottom: 1px solid #E2E8F0; color: #475569; font-size: 15px; }
-          .info-label { font-weight: 600; color: #1E293B; }
           .footer { text-align: center; padding: 20px; font-size: 12px; color: #64748B; border-top: 1px solid #E2E8F0; }
         </style>
       </head>
       <body>
         <div class="container">
           <div class="header">
-            SafeNet Personal Safety Update
+            SafeNet Trusted Contact Update
           </div>
           <div class="content">
             <div class="greeting">Hello ${contact.name},</div>
-            <p>Your trusted contact, <strong>${user.name}</strong>, has activated a SafeNet safety session and shared their current location with you.</p>
+            <p>Your trusted contact, <strong>${user.name}</strong>, has shared a personal safety update with you.</p>
             
             <div class="alert-box">
               <p class="info-label" style="margin-top:0; margin-bottom: 6px;">Safety Status:</p>
@@ -166,18 +149,6 @@ Automated trusted contact communication.
             <div class="btn-container">
               <a href="${trackingLink}" class="btn" target="_blank">Track Live Location</a>
             </div>
-
-            <ul class="info-list">
-              <li class="info-item"><span class="info-label">Notification Time:</span> ${timeString}</li>
-              <li class="info-item"><span class="info-label">Current Coordinates:</span> <a href="https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}" style="color: #3b82f6; text-decoration: underline; font-weight: 600;" target="_blank">Latitude: ${location.lat}, Longitude: ${location.lng}</a></li>
-              <li class="info-item"><span class="info-label">Available Actions:</span>
-                <ul style="margin: 8px 0 0 16px; padding: 0; list-style-type: disc; color: #475569;">
-                  <li>View live tracking in SafeNet</li>
-                  <li><a href="https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}" style="color: #3b82f6; text-decoration: none;" target="_blank">Open current location in Google Maps</a></li>
-                  <li><a href="tel:${user.phone}" style="color: #6366f1; text-decoration: none;" target="_blank">Contact trusted user directly (${user.phone})</a></li>
-                </ul>
-              </li>
-            </ul>
 
             <p style="font-size: 13px; color: #64748B; line-height: 1.5; margin-top: 24px; border-top: 1px dashed #E2E8F0; padding-top: 16px;">
               <strong>Why am I receiving this?</strong><br>
@@ -203,9 +174,13 @@ Automated trusted contact communication.
           }],
           from: {
             email: fromEmail,
-            name: 'SafeNet Safety Alerts'
+            name: 'SafeNet Notifications'
           },
-          subject: `SafeNet Safety Update — Live Tracking Available`,
+          reply_to: {
+            email: fromEmail,
+            name: 'SafeNet Notifications'
+          },
+          subject: 'SafeNet Trusted Contact Update',
           content: [
             {
               type: 'text/plain',
@@ -215,7 +190,15 @@ Automated trusted contact communication.
               type: 'text/html',
               value: html
             }
-          ]
+          ],
+          tracking_settings: {
+            click_tracking: {
+              enable: false
+            },
+            open_tracking: {
+              enable: false
+            }
+          }
         };
 
         await sendGridPost(apiKey, bodyData);
@@ -228,10 +211,12 @@ Automated trusted contact communication.
       // Fallback to standard Nodemailer SMTP
       try {
         const transporter = await createTransporter();
+        const fromEmail = process.env.EMAIL_USER || process.env.GMAIL_USER || 'safenet-alert@ethereal.email';
         await transporter.sendMail({
-          from: `"SafeNet Safety Alerts" <${process.env.EMAIL_USER || process.env.GMAIL_USER || 'safenet-alert@ethereal.email'}>`,
+          from: `"SafeNet Notifications" <${fromEmail}>`,
+          replyTo: fromEmail,
           to: contact.email,
-          subject: `SafeNet Safety Update — Live Tracking Available`,
+          subject: 'SafeNet Trusted Contact Update',
           text: textFallback,
           html
         });
@@ -253,36 +238,22 @@ export const sendCheckinAlert = async (user, location, contacts) => {
   if (!contacts || contacts.length === 0) return [];
   
   const useSendGrid = !!process.env.SENDGRID_API_KEY;
-  const timeString = new Date().toLocaleString("en-US", {
-    timeZone: "Asia/Kolkata",
-    dateStyle: "medium",
-    timeStyle: "short"
-  }) + " (IST)";
   const results = [];
   const mapLink = `https://www.google.com/maps/search/?api=1&query=${location.lat},${location.lng}`;
 
   for (const contact of contacts) {
     const textFallback = `
-SafeNet Check-in Update
+SafeNet Trusted Contact Update
 
 Hello ${contact.name},
 
-Your trusted contact ${user.name} started a scheduled SafeNet check-in. The check-in timer has concluded without a safe confirmation.
+Your trusted contact ${user.name} has shared a personal safety update with you.
 
 Safety Status:
-Check-in timer has concluded without a safe confirmation.
-
-Notification Time:
-${timeString}
-
-Last Known Coordinates:
-Latitude: ${location.lat}
-Longitude: ${location.lng}
+Safety check-in timer has concluded.
 
 Available Actions:
-• View last known location in SafeNet: ${mapLink}
-• Open last known location in Google Maps: ${mapLink}
-• Contact trusted user directly: tel:${user.phone}
+• View Last Known Location: ${mapLink}
 
 Why am I receiving this?
 You are receiving this notification because you were added as a trusted contact in SafeNet.
@@ -296,7 +267,7 @@ Automated trusted contact communication.
       <html>
       <head>
         <meta charset="utf-8">
-        <title>SafeNet Check-in Status Update</title>
+        <title>SafeNet Trusted Contact Update</title>
         <style>
           body { font-family: 'Inter', sans-serif; background-color: #F8FAFC; color: #1E293B; margin: 0; padding: 20px; line-height: 1.6; }
           .container { max-width: 600px; margin: 0 auto; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
@@ -307,41 +278,26 @@ Automated trusted contact communication.
           .alert-msg { font-style: italic; color: #475569; font-size: 16px; margin: 0; }
           .btn-container { text-align: center; margin: 32px 0; }
           .btn { background-color: #475569; color: #FFFFFF !important; text-decoration: none; padding: 14px 32px; border-radius: 50px; font-weight: 600; font-size: 16px; display: inline-block; box-shadow: 0 4px 12px rgba(71, 85, 105, 0.2); transition: all 200ms ease; }
-          .info-list { list-style: none; padding: 0; margin: 24px 0; }
-          .info-item { padding: 8px 0; border-bottom: 1px solid #E2E8F0; color: #475569; font-size: 15px; }
-          .info-label { font-weight: 600; color: #1E293B; }
           .footer { text-align: center; padding: 20px; font-size: 12px; color: #64748B; border-top: 1px solid #E2E8F0; }
         </style>
       </head>
       <body>
         <div class="container">
           <div class="header">
-            SafeNet Check-in Status Update
+            SafeNet Trusted Contact Update
           </div>
           <div class="content">
             <div class="greeting">Hello ${contact.name},</div>
-            <p>Your trusted contact, <strong>${user.name}</strong>, started a scheduled SafeNet check-in. The check-in timer has concluded without a safe confirmation.</p>
+            <p>Your trusted contact, <strong>${user.name}</strong>, has shared a personal safety update with you.</p>
             
             <div class="alert-box">
               <p class="info-label" style="margin-top:0; margin-bottom: 6px;">Safety Status:</p>
-              <p class="alert-msg">Check-in timer has concluded without a safe confirmation.</p>
+              <p class="alert-msg">Safety check-in timer has concluded.</p>
             </div>
 
             <div class="btn-container">
               <a href="${mapLink}" class="btn" target="_blank">View Last Known Location</a>
             </div>
-
-            <ul class="info-list">
-              <li class="info-item"><span class="info-label">Notification Time:</span> ${timeString}</li>
-              <li class="info-item"><span class="info-label">Last Known Coordinates:</span> <a href="${mapLink}" style="color: #3b82f6; text-decoration: underline; font-weight: 600;" target="_blank">Latitude: ${location.lat}, Longitude: ${location.lng}</a></li>
-              <li class="info-item"><span class="info-label">Available Actions:</span>
-                <ul style="margin: 8px 0 0 16px; padding: 0; list-style-type: disc; color: #475569;">
-                  <li>View last known location in SafeNet</li>
-                  <li><a href="${mapLink}" style="color: #3b82f6; text-decoration: none;" target="_blank">Open last known location in Google Maps</a></li>
-                  <li><a href="tel:${user.phone}" style="color: #6366f1; text-decoration: none;" target="_blank">Contact trusted user directly (${user.phone})</a></li>
-                </ul>
-              </li>
-            </ul>
 
             <p style="font-size: 13px; color: #64748B; line-height: 1.5; margin-top: 24px; border-top: 1px dashed #E2E8F0; padding-top: 16px;">
               <strong>Why am I receiving this?</strong><br>
@@ -367,9 +323,13 @@ Automated trusted contact communication.
           }],
           from: {
             email: fromEmail,
-            name: 'SafeNet Safety Alerts'
+            name: 'SafeNet Notifications'
           },
-          subject: `SafeNet Check-in Update — Timer Concluded`,
+          reply_to: {
+            email: fromEmail,
+            name: 'SafeNet Notifications'
+          },
+          subject: `SafeNet Trusted Contact Update`,
           content: [
             {
               type: 'text/plain',
@@ -379,7 +339,15 @@ Automated trusted contact communication.
               type: 'text/html',
               value: html
             }
-          ]
+          ],
+          tracking_settings: {
+            click_tracking: {
+              enable: false
+            },
+            open_tracking: {
+              enable: false
+            }
+          }
         };
 
         await sendGridPost(apiKey, bodyData);
@@ -392,10 +360,12 @@ Automated trusted contact communication.
       // Fallback to standard Nodemailer SMTP
       try {
         const transporter = await createTransporter();
+        const fromEmail = process.env.EMAIL_USER || process.env.GMAIL_USER || 'safenet-alert@ethereal.email';
         await transporter.sendMail({
-          from: `"SafeNet Safety Alerts" <${process.env.EMAIL_USER || process.env.GMAIL_USER || 'safenet-alert@ethereal.email'}>`,
+          from: `"SafeNet Notifications" <${fromEmail}>`,
+          replyTo: fromEmail,
           to: contact.email,
-          subject: `SafeNet Check-in Update — Timer Concluded`,
+          subject: 'SafeNet Trusted Contact Update',
           text: textFallback,
           html
         });
