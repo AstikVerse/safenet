@@ -24,6 +24,16 @@ const SplashScreen = () => {
         <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/20 mb-6 animate-pulse">
           <Shield size={40} className="text-white" strokeWidth={2} />
         </div>
+        
+        {/* Active Platform Status Badge */}
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-[11px] font-extrabold uppercase tracking-widest mb-4">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+          </span>
+          Personal Safety Platform
+        </div>
+
         <h1 className="text-5xl font-bold tracking-tight text-dark-heading mb-3" style={{ fontFamily: 'Inter, sans-serif' }}>
           SafeNet
         </h1>
